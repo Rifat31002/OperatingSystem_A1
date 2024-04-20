@@ -22,11 +22,33 @@ generate_uuid4() {
 	# Generate UUID based on UUID version 4 specifications
 	local uuid4_hex=$(openssl rand -hex 16)
 	# Manipulate bits to set the version (4) and variant (8, 9, or A)
-	local uuid4_hex=${uuid4_hex:0:12}4${uuid4_hex:13:3}8${uuid4_hex:16:1}${uuid4_hex:17:3}
+	uuid4_hex=${uuid4_hex:0:12}4${uuid4_hex:13:3}8${uuid4_hex:16:1}${uuid4_hex:17:3}
     # Format UUID4 with hyphens
-    uuid4=$(echo "${uuid4_hex}" | sed 's/\(..\)/\1-/g')
+    local uuid4=$(echo "${uuid4_hex}" | sed 's/\(..\)/\1-/g')
     echo "${uuid4}"
 }
+
+# Function to check if UUID exists in file and if collision occurred
+check_uuid_collision() {
+    local uuid=$1
+    local file=$2
+
+    if grep -q "$uuid" "$file"; then
+        echo "Collision occurred for UUID: $uuid"
+        return 1
+    else
+        return 0
+    fi
+}
+
+# Function to log UUID creation date
+log_uuid_creation_date() {
+    local uuid=$1
+    local logfile="uuid_log.txt"
+
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $uuid" >> "$logfile"
+}
+
 
 # Main function
 main() {
@@ -39,17 +61,21 @@ main() {
     # Generate UUID1
     local uuid1=$(generate_uuid1)
     if [ $? -ne 0 ]; then
-        echo "Error generating UUID1." #displays an error message and exits
+        echo "Error generating UUID1." # displays an error message and exits
         exit 2
     fi
-    
+    log_uuid_creation_date "$uuid1"
+    check_uuid_collision "$uuid1" "uuid_log.txt" || exit 3
+	#-------------------------------------------------------------------
     # Generate UUID4
     local uuid4=$(generate_uuid4)
-    if [ $? -ne 0 ]; then  # If the exit code is non-zero
-        echo "Error generating UUID4." #
-        exit 3
+    if [ $? -ne 0 ]; then   #
+        echo "Error generating UUID4." # displays an error message and exits
+        exit 4
     fi
-	# 2 for UUID1 generation error, 3 for UUID4 generation error.
+    log_uuid_creation_date "$uuid4"
+    check_uuid_collision "$uuid4" "uuid_log.txt" || exit 5
+
 	#------------------------------------------------------------------
 	
     echo "UUID1: $uuid1"
@@ -57,50 +83,10 @@ main() {
 }
 
 # Call main function
-main
+main "$@"
 
-# Function to genrate UUID
-# generate_uuid() {
-	# Generate UUID based on user imput.
-	#case $1 in
-	#1)
-	# UUID Version 1 : Time stamp based UUID
-		#uuid=$(date +%s)-$(date +%N)-$(openssl rand -hex 6)
-		#uuid=$(cat /proc/sys/kernel/random/uuid)
-		#;;
-	#2)
-	# UUID version 2:Time-based (LSB) + user ID,  DCE Security
-	# Generating a random UUID using random numbers
-	#	uuid=$(openssl rand -hex 16)
-		#echo "UUID version 2 is not supported"
-           # exit 1
-		#;;
-	#3)
-	# UUID version 3: Name-based UUID with MD5 hashing
-        # Not implemented in this example
-        #echo "UUID version 3 is not supported"
-        #exit 1
-		#uuid=$(uuidgen)
-		#;;
-	#4)
-	# PRNG [1 trillion UUIDarg1
-	#s for a chance of 2 repeats]
-		#uuid=$(uuid -v  4)
-		#;;
-	#5)
-	# UUID version 5: Name-based UUID with SHA-1 hashing
-		#uuid=$(uuid -v 5)
-		#;;
-	#*)
-		#echo "Invalid UUID type"
-		#exit 1
-		#;;
-	#esac
-	# Check for collision
-	#if grep -q "^$uuid$" uuid_log.txt; then
-		#echo "UUID collision detected"
-		#exit 1
-	#fi
+
+	
 
 	# Record UUID and timestamp in log 
 	#echo "$uuid $(date)" >> uuid_log.txt
