@@ -1,5 +1,35 @@
 #!/bin/bash
 
+#Function to genrate UUID
+generate_uuid() {
+# Generate UUID based on input type
+	case $1 in
+	1)
+		uuid=$uuid1
+		;;
+	2)
+		uuid=$uuid4
+		;;
+	
+	*)
+		echo "Invalid UUID type"
+		exit 1
+		;;
+	esac
+
+	# check for collision
+	check_uuid_collision
+	#if grep -q "$uuid" uuid_log.txt;  then
+		#echo "UUID collision detected"
+	#fi	
+	# Record UUID and timestamp in log 
+	echo "$uuid $(date)" >> uuid_log.txt
+
+	#Output to terminal and file
+	echo "$uuid"
+	echo "$uuid" >> uuid_output.txt
+
+}
 # Function to genrate UUID1
 generate_uuid1 () {
 	# Generate UUID based on UUID version 1 specifications
@@ -8,8 +38,8 @@ generate_uuid1 () {
 	local random_hex=$(openssl rand -hex 6)
 
 # Debugging: Print out the values of variables
-    echo "Timestamp: $timestamp"
-    echo "Nanoseconds: $nanoseconds"
+    #echo "Timestamp: $timestamp"
+    #echo "Nanoseconds: $nanoseconds"
     echo "Random Hex: $random_hex"
 
 	# Format UUID1 according to the specifications
@@ -30,24 +60,24 @@ generate_uuid4() {
 
 # Function to check if UUID exists in file and if collision occurred
 check_uuid_collision() {
-    local uuid=$1
-    local file=$2
+ local uuid=$1
+	local file=$2
 
     if grep -q "$uuid" "$file"; then
-        echo "Collision occurred for UUID: $uuid"
-        return 1
+       echo "Collision occurred for UUID: $uuid"
+      return 1
     else
         return 0
-    fi
+   fi
 }
 
 # Function to log UUID creation date
-log_uuid_creation_date() {
-    local uuid=$1
-    local logfile="uuid_log.txt"
+#log_uuid_creation_date() {
+   # local uuid=$1
+    #local logfile="uuid_log.txt"
 
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - $uuid" >> "$logfile"
-}
+    #echo "$(date '+%Y-%m-%d %H:%M:%S') - $uuid" >> "$logfile"
+#}
 
 
 # Main function
@@ -64,8 +94,11 @@ main() {
         echo "Error generating UUID1." # displays an error message and exits
         exit 2
     fi
-    log_uuid_creation_date "$uuid1"
-    check_uuid_collision "$uuid1" "uuid_log.txt" || exit 3
+    #log_uuid_creation_date "$uuid1"
+    #check_uuid_collision "$uuid1" "uuid_log.txt" || exit 3
+	
+	#echo "$uuid $(date)" >> uuid_log.txt   # Record UUID and timestamp in log 
+	
 	#-------------------------------------------------------------------
     # Generate UUID4
     local uuid4=$(generate_uuid4)
@@ -73,8 +106,8 @@ main() {
         echo "Error generating UUID4." # displays an error message and exits
         exit 4
     fi
-    log_uuid_creation_date "$uuid4"
-    check_uuid_collision "$uuid4" "uuid_log.txt" || exit 5
+    #log_uuid_creation_date "$uuid4"
+   # check_uuid_collision "$uuid4" "uuid_log.txt" || exit 5
 
 	#------------------------------------------------------------------
 	
@@ -84,12 +117,6 @@ main() {
 
 # Call main function
 main "$@"
-
-
-	
-
-	# Record UUID and timestamp in log 
-	#echo "$uuid $(date)" >> uuid_log.txt
 
 	# Output to terminal and file
 	#echo "$uuid"
