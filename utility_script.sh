@@ -3,9 +3,9 @@
 # Function to genrate UUID1
 generate_uuid1 () {
 	# Generate UUID based on UUID version 1 specifications
-	timestamp=$(date +%s)
-	nanoseconds=$(date +%N)
-	random_hex=$(openssl rand -hex 6)
+	local timestamp=$(date +%s) #local keyword declare variables within functions
+	local nanoseconds=$(date +%N)
+	local random_hex=$(openssl rand -hex 6)
 
 # Debugging: Print out the values of variables
     echo "Timestamp: $timestamp"
@@ -13,16 +13,16 @@ generate_uuid1 () {
     echo "Random Hex: $random_hex"
 
 	# Format UUID1 according to the specifications
-	uuid="${timestamp}-${nanoseconds}-${random_hex}"
-	echo "$uuid1" # Debugging: Print UUID1
+	local uuid="${timestamp}-${nanoseconds}-${random_hex}"
+	echo "$uuid1" # Printing UUID1
 }
 
 # Function to genrate UUID4
 generate_uuid4() {
 	# Generate UUID based on UUID version 4 specifications
-	uuid4_hex=$(openssl rand -hex 16)
+	local uuid4_hex=$(openssl rand -hex 16)
 	# Manipulate bits to set the version (4) and variant (8, 9, or A)
-	uuid4_hex=${uuid4_hex:0:12}4${uuid4_hex:13:3}8${uuid4_hex:16:1}${uuid4_hex:17:3}
+	local uuid4_hex=${uuid4_hex:0:12}4${uuid4_hex:13:3}8${uuid4_hex:16:1}${uuid4_hex:17:3}
     # Format UUID4 with hyphens
     uuid4=$(echo "${uuid4_hex}" | sed 's/\(..\)/\1-/g')
     echo "${uuid4}"
@@ -37,21 +37,21 @@ main() {
     fi
 	#------------------------------------------------------------------
     # Generate UUID1
-    uuid1=$(generate_uuid1)
+    local uuid1=$(generate_uuid1)
     if [ $? -ne 0 ]; then
         echo "Error generating UUID1." #displays an error message and exits
         exit 2
     fi
     
     # Generate UUID4
-    uuid4=$(generate_uuid4)
+    local uuid4=$(generate_uuid4)
     if [ $? -ne 0 ]; then  # If the exit code is non-zero
         echo "Error generating UUID4." #
         exit 3
     fi
 	# 2 for UUID1 generation error, 3 for UUID4 generation error.
 	#------------------------------------------------------------------
-	# Print UUIDs
+	
     echo "UUID1: $uuid1"
     echo "UUID4: $uuid4"
 }
