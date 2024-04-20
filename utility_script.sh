@@ -5,13 +5,13 @@ generate_uuid() {
 	# Generate UUID based on input type
 	case $1 in
 	1)
-		uuid=$(uuid)
+		uuid=$(cat /proc/sys/kernel/random/uuid)
 		;;
 	2)
 		uuid=$(openssl rand -hex 16)
 		;;
 	3)
-		uuid=$(uuid)
+		uuid=$(uuidgen)
 		;;
 	4)
 		uuid=$(uuid -v  4)
@@ -36,10 +36,11 @@ generate_uuid() {
 	# Output to terminal and file
 	echo "$uuid"
 	echo "$uuid" >> uuid_output.txt
-	}
+}
 
-	#Function to catagorise content in directory
-#	catagorize_directory() {
+
+#Function to catagorise content in directory
+catagorize_directory() {
 	# Iterate Through child  directories 
 	
 	# Count file types, calculate collective size
@@ -47,15 +48,17 @@ generate_uuid() {
 	#Find shortest and largest file names
 
 	# output results to terminal and file
+	echo "This function is not yer implimented"
 
-#	}
+}
 
-	# Main Function
-	main(){
-	# Check arguments
+# Main Function
+main(){
+# Check arguments
 	if [ $# -eq 0 ]; then
-		echo "Usage :  $0 <option>"
-		exit 1
+	echo "Usage :  $0 <option>"
+	exit 1
+	
 	fi
 
 	# Record PID of script
@@ -67,7 +70,7 @@ generate_uuid() {
 	# Perform action based on option
 	case $1 in
 	uuid)
-		generate_uuid $2
+		generate_uuid "$2"
 		;;
 
 	categorize)
@@ -80,7 +83,7 @@ generate_uuid() {
 	esac
 
 	}
-	# Call main function with arguements
+# Call main function with arguements
 main "$@"
 
 
