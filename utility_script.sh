@@ -30,11 +30,30 @@ generate_uuid4() {
 
 # Main function
 main() {
+	 # Validate script variable inputs
+    if [[ $# -ne 0 ]]; then   # if any arguments are prrovided exits with code 1
+        echo "Error: This script does not take any arguments."
+        exit 1
+    fi
+	#------------------------------------------------------------------
     # Generate UUID1
-    echo "UUID1: $(generate_uuid1)"
+    uuid1=$(generate_uuid1)
+    if [ $? -ne 0 ]; then
+        echo "Error generating UUID1." #displays an error message and exits
+        exit 2
+    fi
     
     # Generate UUID4
-    echo "UUID4: $(generate_uuid4)"
+    uuid4=$(generate_uuid4)
+    if [ $? -ne 0 ]; then  # If the exit code is non-zero
+        echo "Error generating UUID4." #
+        exit 3
+    fi
+	# 2 for UUID1 generation error, 3 for UUID4 generation error.
+	#------------------------------------------------------------------
+	# Print UUIDs
+    echo "UUID1: $uuid1"
+    echo "UUID4: $uuid4"
 }
 
 # Call main function
