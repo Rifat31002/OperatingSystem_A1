@@ -7,9 +7,14 @@ generate_uuid1 () {
 	nanoseconds=$(date +%N)
 	random_hex=$(openssl rand -hex 6)
 
+# Debugging: Print out the values of variables
+    echo "Timestamp: $timestamp"
+    echo "Nanoseconds: $nanoseconds"
+    echo "Random Hex: $random_hex"
+
 	# Format UUID1 according to the specifications
 	uuid="${timestamp}-${nanoseconds}-${random_hex}"
-	echo "$uuid1"
+	echo "$uuid1" # Debugging: Print UUID1
 }
 
 # Function to genrate UUID4
