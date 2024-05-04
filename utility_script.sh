@@ -1,7 +1,6 @@
 #!/bin/bash
 
-#Function to genrate UUID
-generate_uuid() {
+generate_uuid() {     #Function to genrate UUID
 # Generate UUID based on input type
 	case $1 in
 	1)
@@ -18,16 +17,22 @@ generate_uuid() {
 	esac
 
 	# check for collision
-	check_uuid_collision
-	#if grep -q "$uuid" uuid_log.txt;  then
-		#echo "UUID collision detected"
-	#fi	
-	# Record UUID and timestamp in log 
-	echo "$uuid $(date)" >> uuid_log.txt
+	check_uuid_collision(){
+		local uuid=$1
+		local log_file="uuid_log.txt"
 
-	#Output to terminal and file
-	echo "$uuid"
-	echo "$uuid" >> uuid_output.txt
+		if grep -q "$uuid" "log_file";  then  #grep searches for patterns
+		echo "Collision occured for UUID: $uuid"
+		return 1
+		else 
+		return 0
+		fi	
+
+	}
+
+	echo "$uuid $(date)" >> uuid_log.txt  # Record UUID and timestamp in log 
+	echo "$uuid"   #Output to terminal and 
+	echo "$uuid" >> uuid_output.txt # Record UUID output in a file
 
 }
 # Function to genrate UUID1
@@ -40,10 +45,10 @@ generate_uuid1 () {
 # Debugging: Print out the values of variables
     #echo "Timestamp: $timestamp"
     #echo "Nanoseconds: $nanoseconds"
-    echo "Random Hex: $random_hex"
+    #echo "Random Hex: $random_hex"
 
 	# Format UUID1 according to the specifications
-	local uuid="${timestamp}-${nanoseconds}-${random_hex}"
+	local uuid1="${timestamp}-${nanoseconds}-${random_hex}"
 	echo "$uuid1" # Printing UUID1
 }
 
@@ -60,13 +65,13 @@ generate_uuid4() {
 
 # Function to check if UUID exists in file and if collision occurred
 check_uuid_collision() {
- local uuid=$1
+local uuid=$1
 	local file=$2
 
     if grep -q "$uuid" "$file"; then
-       echo "Collision occurred for UUID: $uuid"
+       echo "Collision occurred for UUID: $uuid"""
       return 1
-    else
+    else""
         return 0
    fi
 }
@@ -79,9 +84,7 @@ check_uuid_collision() {
     #echo "$(date '+%Y-%m-%d %H:%M:%S') - $uuid" >> "$logfile"
 #}
 
-
-# Main function
-main() {
+main() {      # Main function
 	 # Validate script variable inputs
     if [[ $# -ne 0 ]]; then   # if any arguments are prrovided exits with code 1
         echo "Error: This script does not take any arguments."
@@ -94,10 +97,10 @@ main() {
         echo "Error generating UUID1." # displays an error message and exits
         exit 2
     fi
-    #log_uuid_creation_date "$uuid1"
-    #check_uuid_collision "$uuid1" "uuid_log.txt" || exit 3
 	
-	#echo "$uuid $(date)" >> uuid_log.txt   # Record UUID and timestamp in log 
+    #log_uuid_creation_date "$uuid1"
+    check_uuid_collision "$uuid1" "uuid_log.txt" || exit 3 # calling function to check collision
+	echo "$uuid $(date)" >> uuid_log.txt   # Record UUID and timestamp in log 
 	
 	#-------------------------------------------------------------------
     # Generate UUID4
@@ -107,7 +110,7 @@ main() {
         exit 4
     fi
     #log_uuid_creation_date "$uuid4"
-   # check_uuid_collision "$uuid4" "uuid_log.txt" || exit 5
+	check_uuid_collision "$uuid4" "uuid_log.txt" || exit 5
 
 	#------------------------------------------------------------------
 	
@@ -149,8 +152,8 @@ catagorize_directory() {
 	# Record PID of script
 	#echo "Script PID: $$" >> script_log.txt
 
-	# Record script comand
-	#echo "$(date) -$@" >> script_log.txt
+	
+	#echo "$(date) -$@" >> script_log.txt # Record script comand
 
 	# Perform action based on option
 	#case $1 in
