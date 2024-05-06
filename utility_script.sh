@@ -80,9 +80,10 @@ generate_uuid() {     #Function to genrate UUID
 
     while (( attempts > 0 )); do		# check if UUID exists in file and if collision occurred
         if ! grep -q "^$uuid$" "$log_file"; then	# Check for collision
-            echo "$uuid $(date)">>"$log_file"		# Record UUID and timestamp in log
+            echo "$uuid$ $(date)">>"$log_file"		# Record UUID and timestamp in log
             echo "$uuid"				# Output to terminal 
             echo "$uuid">> uuid_output.txt
+        	
             return 0
         else
             echo "Collision detected for UUID : $uuid"
@@ -106,7 +107,9 @@ categorie_directory() {
        
         # Count files of each type and calculate size
         file_types=$(find "$dir" -type f | awk -F. '{print $NF}' | sort | uniq -c)
-        total_size=$(du -sh "$dir" | awk '{print $1}')
+        total_size=$(du -sh "$dir" | awk '{print $1}') # Human readable formate
+        permissions=$(ls -l "$dir")
+        file_info=$(ls -l "$dir" | awk '{print $1,$3,$4,$5,$6,$7,$8,$9}')
         
         # Find shortest and largest file names
         shortest_file=$(find "$dir" -type f -printf "%f\n" | awk '{print length, $0}' | sort -n | head -n 1 | cut -d ' ' -f 2-)
@@ -114,23 +117,43 @@ categorie_directory() {
         
         # Output results to terminal 
         echo "Directory: $dir_name"     # output directory name to terminal
-        echo "File types and counts:"
-        echo "$file_types"
+        echo "Permissions, Owner, Group, Size, Last Modified, Filename:"
+        echo "$permissions"
         echo "Total size : $total_size"
         # Output shortest and longest file names to terminal
         echo "Shortest file name: $shortest_file"
         echo "Longest file name: $longest_file"
         
         # Output results to file
+        echo " " >> directory_output.txt #Space before each directory
+        echo "$(date)" >> directory_output.txt
         echo "Directory: $dir_name" >> directory_output.txt
-        echo "File types and counts:" >> directory_output.txt
-        echo "$file_types" >> directory_output.txt
+        echo "Permissions, Owner, Group, Size, Last Modified, Filename:" >> directory_output.txt
+        echo "$file_info" >> directory_output.txt
         echo "Total size: $total_size" >> directory_output.txt
         echo "Shortest file name: $shortest_file" >> directory_output.txt
         echo "Longest file name: $longest_file" >> directory_output.txt
-        echo >> directory_output.txt
+        echo "" >> directory_output.txt
 
     done
+}
+
+# Record user login information and script commands
+record_logs() {
+    
+    current_datetime=$(date "+%Y-%m-%d %H:%M:%S")   # Get current date and time
+
+    # Get user login information
+    user_login_info=$(whoami)
+    script_commands=$(history | tail -n +2 | sed 's/^[[:space:]]*[0-9]*[[:space:]]*//' | sed '/^record_logs$/d')    # Get script commands from history
+    # Create log entry
+    log_entry="[$current_datetime] User login information:\n$user_login_info\n\nScript commands:\n$script_commands\n"
+
+    # Append log entry to log file
+    echo -e "$log_entry" >> script_log.txt
+
+    # Print log entry to terminal
+    echo -e "Log entry recorded:\n$log_entry"
 }
 
 # Main function
