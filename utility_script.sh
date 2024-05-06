@@ -26,6 +26,7 @@ generate_uuid2() {		# Distributed Computing Environment (DCE)
     local uuid=$(printf "%X-%X-%s-%s" $timestamp $lower_timestamp $mac_address $hostname)      # Combine timestamp, local identifier, MAC address, and hostname
     
     echo "UUID version 2: $uuid"        # Print UUID version 2 to the terminal
+
 }
 
 # Function to genrate UUID4
@@ -66,18 +67,17 @@ generate_uuid() {
 	local uuid=$1
     local uuid_type=$1
     local log_file="uuid_log.txt"
-    local max_attempts=3
-    local attempt=1
+    local attempt=3
 
     case $uuid_type in	# Generate UUID based on input type
         1)
-            generate_uuid1
+            uuid=$(generate_uuid1)
             ;;
         2)
-            generate_uuid2
+            uuid=$(generate_uuid2)
             ;;
 		4)
-			generate_uuid4
+			uuid=$(generate_uuid4)
             ;;
         *)
             echo "Invalid UUID type"
@@ -85,15 +85,15 @@ generate_uuid() {
             ;;
     esac
 
-    while (( attempts <= max_attempts )); do		# check if UUID exists in file and if collision occurred
-        if ! check_uuid_collision  "$uuid" "$log_file"; then	# Check for collision
-            echo "$uuid $(date)">>"$log_file"		# Record UUID and timestamp in log
+    while (( attempt > 0  )); do		# check if UUID exists in file and if collision occurred
+        if ! grep -q  "^$uuid" "$log_file"; then	# Check for collision
+            echo "$(date) $uuid$ ">>"$log_file"		# Record UUID and timestamp in log
             echo "$uuid"				# Output to terminal 
             echo "$uuid">> uuid_output.txt
             return 0
         else
             echo "Collision detected for UUID : $uuid"
-            (( attempt++ ))
+            (( attempt--))
             uuid=$(generate_uuid $uuid_type) # Retry generating UUID
         fi
     done
@@ -127,7 +127,7 @@ categorie_directory() {
         # Output shortest and longest file names to terminal
         echo "Shortest file name: $shortest_file"
         echo "Longest file name: $longest_file"
-         echo " "         # Add a blank line for separation
+        echo " "         # Add a blank line for separation
         
     done
 }
@@ -141,7 +141,6 @@ record_logs() {
     # Append script commands to log file
     history | tail -n +2 | sed 's/^[[:space:]]*[0-9]*[[:space:]]*//' >> script_log.txt
 }
-
   
 create_man_page() {
     # Create man page content
@@ -171,31 +170,26 @@ main() {
 	
     #prompt user to enter a UUID type to type.
     while [[ $attempts -gt 0 ]]; do
-        read -p "Enter 1 for UUID version 1, 2 for UUID version 2 , 4 for UUID version 4 & 3 for categorise : " uuid_type
+        read -p "Enter 1 for UUID version 1, 2 for UUID version 2 & 4 for UUID version 4 : " uuid_type
         case $uuid_type in   
 			1|2|4)
                 generate_uuid $uuid_type
 				break
                 ;;
-            3)
-                categorise_directory
-                echo "$catagorise_directory " >> directory_output.txt
-                break
-                ;;
             *)
-                echo "Invalid option. Usage: $0 {1 | 2 | 3 | 4}"
+                echo "Invalid option. Usage: $0 {1 | 2 | 4}"
                 ((attempts--))
                 ;;
         esac
     done
     echo "Maximum attempts reached. Exiting..."
-	record_logs
-    # Record UUID and timestamp in log 
+	echo "$catagorise_directory " >> directory_output.txt
 	# Record script command
-    echo "$(date) $(whoami) -Script PID: $$" >> script_log.txt  # Record PID of script with user
-
+    echo "$(date) | $(whoami) -Script PID: $$" >> script_log.txt  # Record PID of script with user
     # Append script commands to log file
     history | tail -n +2 | sed 's/^[[:space:]]*[0-9]*[[:space:]]*//' >> script_log.txt
+    echo "User login information: $(date) | $(whoami) " # Printing to the terminal
+    xit 1
 }
 
 # Check if an argument is passed to the script
