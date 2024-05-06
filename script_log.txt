@@ -43,3 +43,41 @@ Mon May  6 11:43:08 BST 2024 - Script PID: 3843064
 Mon May  6 11:43:58 BST 2024 - Script PID: 3843224
 Mon May  6 11:49:21 BST 2024 - Script PID: 3843433
 Mon May  6 12:11:06 BST 2024 - Script PID: 3843659
+Mon May  6 12:20:14 BST 2024 - Script PID: 3844468
+Mon May  6 12:32:10 BST 2024 - Script PID: 3844663
+Mon May  6 12:32:10 BST 2024 - Logged-in users:
+rifat    pts/1        2024-05-01 21:55
+rifat -Script PID: 3844878 
+Mon May  6 12:40:50 BST 2024 rifat -Script PID: 3845093 
+Mon May  6 12:54:52 BST 2024 rifat -Script PID: 3846583
+Mon May  6 13:01:11 BST 2024 rifat -Script PID: 3846870
+[2024-05-06 13:21:13] User login information:
+rifat
+
+Script commands:
+
+
+Mon May  6 13:21:13 BST 2024 rifat -Script PID: 3847029
+[2024-05-06 13:46:19 User login information: rifat 
+
+Script commands:
+
+
+Mon May  6 13:46:19 BST 2024 rifat -Script PID: 3847411
+[2024-05-06 13:52:58 User login information: rifat 
+
+Mon May  6 13:52:59 BST 2024 rifat -Script PID: 3847554
+[2024-05-06 15:38:16] User login information:
+rifat
+
+Script commands:
+
+
+Mon May  6 15:38:16 BST 2024 rifat -Script PID: 3847813
+[2024-05-06 15:38:33] User login information:
+rifat
+
+Script commands:
+
+
+Mon May  6 15:38:33 BST 2024 rifat -Script PID: 3848144

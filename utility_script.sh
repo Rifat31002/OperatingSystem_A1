@@ -26,7 +26,6 @@ generate_uuid2() {		# Distributed Computing Environment (DCE)
     local uuid=$(printf "%X-%X-%s-%s" $timestamp $lower_timestamp $mac_address $hostname)      # Combine timestamp, local identifier, MAC address, and hostname
     
     echo "UUID version 2: $uuid"        # Print UUID version 2 to the terminal
-    #echo "$uuid" >> uuid_output.txt     # Save UUID version 2 to a file
 }
 
 # Function to genrate UUID4
@@ -48,29 +47,37 @@ generate_uuid4() {          # Generate UUID based on UUID version 4 specificatio
     local uuid=$(echo "${uuid_hex^^}" | sed 's/-$//')       # Convert to uppercase and remove trailing hyphen
 
     echo "UUID version 4: $uuid"    # Print UUID version 4 to the terminal
-   # echo "$uuid" >> uuid_output.txt # Save UUID version 4 to a file 
+}
+# Function to check if UUID exists in file and if collision occurred
+check_uuid_collision() {
+    local uuid=$1
+    local log_file=$2
 
+    if grep -q "^$uuid$" "$log_file"; then
+      return 1
+    else
+        return 0
+   fi
 }
 
-generate_uuid() {     #Function to genrate UUID
+#Function to genrate UUID
+generate_uuid() {     
 
-	local uuid
+	local uuid=$1
     local uuid_type=$1
     local log_file="uuid_log.txt"
+    local max_attempts=3
+    local attempt=1
 
-    local attempt=3
     case $uuid_type in	# Generate UUID based on input type
         1)
-            uuid=$(generate_uuid1)
+            generate_uuid1
             ;;
         2)
-            uuid=$(generate_uuid2)
+            generate_uuid2
             ;;
 		4)
-			uuid=$(generate_uuid4)
-            ;;
-		3)
-			categorie_directory
+			generate_uuid4
             ;;
         *)
             echo "Invalid UUID type"
@@ -78,26 +85,23 @@ generate_uuid() {     #Function to genrate UUID
             ;;
     esac
 
-    while (( attempts > 0 )); do		# check if UUID exists in file and if collision occurred
-        if ! grep -q "^$uuid$" "$log_file"; then	# Check for collision
-            echo "$uuid$ $(date)">>"$log_file"		# Record UUID and timestamp in log
+    while (( attempts <= max_attempts )); do		# check if UUID exists in file and if collision occurred
+        if ! check_uuid_collision  "$uuid" "$log_file"; then	# Check for collision
+            echo "$uuid $(date)">>"$log_file"		# Record UUID and timestamp in log
             echo "$uuid"				# Output to terminal 
             echo "$uuid">> uuid_output.txt
-        	
             return 0
         else
             echo "Collision detected for UUID : $uuid"
-            (( max_attempts-- ))
+            (( attempt++ ))
             uuid=$(generate_uuid $uuid_type) # Retry generating UUID
         fi
-		
     done
 
     echo "Maximum attempts reached. Exiting..."
     exit 1
 
 }
-
 
 # Function to categorize content in directory
 categorie_directory() {
@@ -117,66 +121,66 @@ categorie_directory() {
         
         # Output results to terminal 
         echo "Directory: $dir_name"     # output directory name to terminal
-        echo "Permissions, Owner, Group, Size, Last Modified, Filename:"
+        echo "Permissions | Owner | Group | Size | Last Modified | Filename |"
         echo "$permissions"
         echo "Total size : $total_size"
         # Output shortest and longest file names to terminal
         echo "Shortest file name: $shortest_file"
         echo "Longest file name: $longest_file"
+         echo " "         # Add a blank line for separation
         
-        # Output results to file
-        echo " " >> directory_output.txt #Space before each directory
-        echo "$(date)" >> directory_output.txt
-        echo "Directory: $dir_name" >> directory_output.txt
-        echo "Permissions, Owner, Group, Size, Last Modified, Filename:" >> directory_output.txt
-        echo "$file_info" >> directory_output.txt
-        echo "Total size: $total_size" >> directory_output.txt
-        echo "Shortest file name: $shortest_file" >> directory_output.txt
-        echo "Longest file name: $longest_file" >> directory_output.txt
-        echo "" >> directory_output.txt
-
     done
 }
-
-# Record user login information and script commands
+# Function to record user login information and script commands
 record_logs() {
-    
-    current_datetime=$(date "+%Y-%m-%d %H:%M:%S")   # Get current date and time
+    # Get current date, time, history & Get user login information
+    local script_commands=$(history | tail -n +2 | sed 's/^[[:space:]]*[0-9]*[[:space:]]*//' | sed '/^record_logs$/d')  # Get script commands from history
+    local log_entry="[$(date "+%Y-%m-%d %H:%M:%S") User login information: $(whoami) \n" # Create log entry
+    echo -e "$log_entry" >> script_log.txt      # Append log entry to log file
+    echo -e "Log entry recorded !\n$log_entry"   # Print log entry to terminal
+    # Append script commands to log file
+    history | tail -n +2 | sed 's/^[[:space:]]*[0-9]*[[:space:]]*//' >> script_log.txt
+}
 
-    # Get user login information
-    user_login_info=$(whoami)
-    script_commands=$(history | tail -n +2 | sed 's/^[[:space:]]*[0-9]*[[:space:]]*//' | sed '/^record_logs$/d')    # Get script commands from history
-    # Create log entry
-    log_entry="[$current_datetime] User login information:\n$user_login_info\n\nScript commands:\n$script_commands\n"
-
-    # Append log entry to log file
-    echo -e "$log_entry" >> script_log.txt
-
-    # Print log entry to terminal
-    echo -e "Log entry recorded:\n$log_entry"
+  
+create_man_page() {
+    # Create man page content
+    local man_page_content="
+    .TH UTILITY_SCRIPT 1 \"\" \"Utility Script Manual\"
+    .SH NAME
+    utility_script \- Bash utility script
+    .SH SYNOPSIS
+    utility_script [OPTIONS]
+    .SH DESCRIPTION
+    This script is a Bash utility that can generate UUIDs, categorize content in directories, and record user login information and script commands.
+    .SH OPTIONS
+    .B record-logs
+    Record user login information and script commands.
+    .B create-man-page
+    Create a man page for the utility script.
+    .SH AUTHOR
+    Your Name
+    "
+    echo "$man_page_content" > utility_script.1     # Create man page file
+    gzip utility_script.1       # Compress man page file
 }
 
 # Main function
 main() {
     local attempts=3
-	#prompt user to enter a UUID type to type.
+	
+    #prompt user to enter a UUID type to type.
     while [[ $attempts -gt 0 ]]; do
         read -p "Enter 1 for UUID version 1, 2 for UUID version 2 , 4 for UUID version 4 & 3 for categorise : " uuid_type
         case $uuid_type in   
-			1)
-                generate_uuid1
-				break
-                ;;
-            2)
-                generate_uuid2
-				break
-                ;;
-            4)
-                generate_uuid4
+			1|2|4)
+                generate_uuid $uuid_type
 				break
                 ;;
             3)
                 categorise_directory
+                echo "$catagorise_directory " >> directory_output.txt
+                break
                 ;;
             *)
                 echo "Invalid option. Usage: $0 {1 | 2 | 3 | 4}"
@@ -185,19 +189,28 @@ main() {
         esac
     done
     echo "Maximum attempts reached. Exiting..."
-	
-	#echo "Script PID: $$" >> script_log.txt
-	# Record script comand
-	echo "$(date) -$@ Script PID: $$" >> script_log.txt		# Record PID of script
-    categorie_directory
-	exit 1
-	
+	record_logs
+    # Record UUID and timestamp in log 
+	# Record script command
+    echo "$(date) $(whoami) -Script PID: $$" >> script_log.txt  # Record PID of script with user
+
+    # Append script commands to log file
+    history | tail -n +2 | sed 's/^[[:space:]]*[0-9]*[[:space:]]*//' >> script_log.txt
 }
 
-# Function to display the man page
-display_man_page() {
-    # Your code to display the man page here
-    echo "nothing"
-}
-
-main "$@"       # Call main function
+# Check if an argument is passed to the script
+if [[ $# -eq 1 ]]; then
+    case $1 in
+        record-logs)
+            record_logs
+            ;;
+        man-page)
+            create_man_page
+            ;;
+        *)
+            echo "Invalid argument. Usage: $0 {record-logs | man-page}"
+            ;;
+    esac
+else
+    main "$@"
+fi
