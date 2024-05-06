@@ -1,0 +1,55 @@
+Directory: subdirectory_1
+File types and counts:
+    215 dat
+    120 jpg
+    123 png
+    125 sh
+    112 txt
+Total size: 14M
+Shortest file name: 4fR.sh
+Longest file name: yjZQxlmP8hcxrfKhc.jpg
+
+Directory: subdirectory_2
+File types and counts:
+    235 dat
+    116 jpg
+    129 png
+    117 sh
+     98 txt
+Total size: 15M
+Shortest file name: NxD.sh
+Longest file name: yYT5melD06MqNTB0J.png
+
+Directory: subdirectory_3
+File types and counts:
+    238 dat
+     91 jpg
+    130 png
+    124 sh
+    112 txt
+Total size: 14M
+Shortest file name: 981.sh
+Longest file name: wiZb97Gwixk27sBZP.jpg
+
+Directory: subdirectory_4
+File types and counts:
+    239 dat
+    116 jpg
+    119 png
+    122 sh
+     99 txt
+Total size: 14M
+Shortest file name: 1Vk.sh
+Longest file name: zVg8HqQD7aScHgvP5.txt
+
+Directory: subdirectory_5
+File types and counts:
+    225 dat
+     96 jpg
+    123 png
+    124 sh
+    127 txt
+Total size: 13M
+Shortest file name: 5SJ.sh
+Longest file name: znQ8P78pY3LXDRuKi.dat
+

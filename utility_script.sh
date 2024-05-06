@@ -1,177 +1,180 @@
 #!/bin/bash
 
-generate_uuid() {     #Function to genrate UUID
-# Generate UUID based on input type
-	case $1 in
-	1)
-		uuid=$uuid1
-		;;
-	2)
-		uuid=$uuid4
-		;;
-	
-	*)
-		echo "Invalid UUID type"
-		exit 1
-		;;
-	esac
-
-	# check for collision
-	check_uuid_collision(){
-		local uuid=$1
-		local log_file="uuid_log.txt"
-
-		if grep -q "$uuid" "log_file";  then  #grep searches for patterns
-		echo "Collision occured for UUID: $uuid"
-		return 1
-		else 
-		return 0
-		fi	
-
-	}
-
-	echo "$uuid $(date)" >> uuid_log.txt  # Record UUID and timestamp in log 
-	echo "$uuid"   #Output to terminal and 
-	echo "$uuid" >> uuid_output.txt # Record UUID output in a file
-
-}
 # Function to genrate UUID1
 generate_uuid1 () {
-	# Generate UUID based on UUID version 1 specifications
-	local timestamp=$(date +%s) #local keyword declare variables within functions
-	local nanoseconds=$(date +%N)
-	local random_hex=$(openssl rand -hex 6)
-
-# Debugging: Print out the values of variables
-    #echo "Timestamp: $timestamp"
-    #echo "Nanoseconds: $nanoseconds"
-    #echo "Random Hex: $random_hex"
-
-	# Format UUID1 according to the specifications
-	local uuid1="${timestamp}-${nanoseconds}-${random_hex}"
-	echo "$uuid1" # Printing UUID1
+    # Generate UUID based on UUID version 1 specifications
+    local timestamp=$(date +%s)             # Get current timestamp in seconds since Unix epoch
+    local nanoseconds=$(date +%N)           # Get nanoseconds portion of current time
+    
+    # Get the MAC address of the host machine
+    local mac_address=$(ip link show | grep -oE 'ether [[:alnum:]:]+' | awk '{print $2}')
+    local uuid="${timestamp}-${nanoseconds}-${mac_address}" # Format UUID1 according to specifications  # Format UUID1 according to the specifications
+    
+    echo  "UUID version 1: $uuid"            # Print UUID version 1 to the terminal
+    #echo "$uuid" >> uuid_output.txt      # Save UUID version 1 to a file
+    # Debugging: Print out the values of variables
+            #echo "Timestamp: $timestamp"
+            #echo "Nanoseconds: $nanoseconds"
+            #echo "Random Hex: $random_hex"
+}
+# Function to generate UUID2
+generate_uuid2() {		# Distributed Computing Environment (DCE)
+    local timestamp=$(date +%s)         # Get current timestamp in seconds simce Unix epoch
+    local lower_timestamp=$(( $timestamp & 0xFFFFFFFF ))        # Get the lower 32 bits of the timestamp
+    local mac_address=$(ip link show | grep -oE 'ether [[:alnum:]:]+' | awk '{print $2}')       # Get the MAC address of the host machine
+    local hostname=$(hostname)           # Get the domain name or hostname
+    local uuid=$(printf "%X-%X-%s-%s" $timestamp $lower_timestamp $mac_address $hostname)      # Combine timestamp, local identifier, MAC address, and hostname
+    
+    echo "UUID version 2: $uuid"        # Print UUID version 2 to the terminal
+    #echo "$uuid" >> uuid_output.txt     # Save UUID version 2 to a file
 }
 
 # Function to genrate UUID4
-generate_uuid4() {
-	# Generate UUID based on UUID version 4 specifications
-	local uuid4_hex=$(openssl rand -hex 16)
-	# Manipulate bits to set the version (4) and variant (8, 9, or A)
-	uuid4_hex=${uuid4_hex:0:12}4${uuid4_hex:13:3}8${uuid4_hex:16:1}${uuid4_hex:17:3}
-    # Format UUID4 with hyphens
-    local uuid4=$(echo "${uuid4_hex}" | sed 's/\(..\)/\1-/g')
-    echo "${uuid4}"
-}
+generate_uuid4() {          # Generate UUID based on UUID version 4 specifications
+    local random_hex=$(dd if=/dev/random count=16 bs=1 2>/dev/null | xxd -ps)       # Generate 128 random bits
+    local byte7=${random_hex:12:2}  # Manipulate bits to set the version (4)Take the 7th byte and perform an AND operation with 0x0F to clear out the high nibble.
+    
+    byte7=$(( 0x$byte7 & 0x0F ))
+    byte7=$(( $byte7 | 0x40 ))      # OR it with 0x40 to set the version number to 4.
+    
+    local byte9=${random_hex:24:2}  # Next, take the 9th byte 
+    
+    byte9=$(( 0x$byte9 & 0x3F ))    #and perform an AND operation with 0x3F 
+    byte9=$(( $byte9 | 0x80 ))      #and then OR it with 0x80.
 
-# Function to check if UUID exists in file and if collision occurred
-check_uuid_collision() {
-local uuid=$1
-	local file=$2
+    # Constructing the modified random hex
+    local modified_hex="${random_hex:0:24}$(printf "%02X" $byte7)${random_hex:14:8}$(printf "%02X" $byte9)${random_hex:26}"
+    local uuid_hex=$(echo "$modified_hex" | sed 's/\(..\)/\1-/g')   # Convert to hexadecimal representation
+    local uuid=$(echo "${uuid_hex^^}" | sed 's/-$//')       # Convert to uppercase and remove trailing hyphen
 
-    if grep -q "$uuid" "$file"; then
-       echo "Collision occurred for UUID: $uuid"""
-      return 1
-    else""
-        return 0
-   fi
-}
-
-# Function to log UUID creation date
-#log_uuid_creation_date() {
-   # local uuid=$1
-    #local logfile="uuid_log.txt"
-
-    #echo "$(date '+%Y-%m-%d %H:%M:%S') - $uuid" >> "$logfile"
-#}
-
-main() {      # Main function
-	 # Validate script variable inputs
-    if [[ $# -ne 0 ]]; then   # if any arguments are prrovided exits with code 1
-        echo "Error: This script does not take any arguments."
-        exit 1
-    fi
-	#------------------------------------------------------------------
-    # Generate UUID1
-    local uuid1=$(generate_uuid1)
-    if [ $? -ne 0 ]; then
-        echo "Error generating UUID1." # displays an error message and exits
-        exit 2
-    fi
-	
-    #log_uuid_creation_date "$uuid1"
-    check_uuid_collision "$uuid1" "uuid_log.txt" || exit 3 # calling function to check collision
-	echo "$uuid $(date)" >> uuid_log.txt   # Record UUID and timestamp in log 
-	
-	#-------------------------------------------------------------------
-    # Generate UUID4
-    local uuid4=$(generate_uuid4)
-    if [ $? -ne 0 ]; then   #
-        echo "Error generating UUID4." # displays an error message and exits
-        exit 4
-    fi
-    #log_uuid_creation_date "$uuid4"
-	check_uuid_collision "$uuid4" "uuid_log.txt" || exit 5
-
-	#------------------------------------------------------------------
-	
-    echo "UUID1: $uuid1"
-    echo "UUID4: $uuid4"
-}
-
-# Call main function
-main "$@"
-
-	# Output to terminal and file
-	#echo "$uuid"
-	#echo "$uuid" >> uuid_output.txt
-#}
-
-
-#Function to catagorise content in directory
-catagorize_directory() {
-	# Iterate Through child  directories 
-	
-	# Count file types, calculate collective size
-
-	# Find shortest and largest file names
-	
-	# Output results to terminal and file
-	echo "This function is not yet implimented"
+    echo "UUID version 4: $uuid"    # Print UUID version 4 to the terminal
+   # echo "$uuid" >> uuid_output.txt # Save UUID version 4 to a file 
 
 }
 
-# Main Function
-#main(){
-# Check arguments
-	#if [ $# -eq 0 ]; then
-	#echo "Usage :  $0 <option>"
-	#exit 1
-	
-	#fi
+generate_uuid() {     #Function to genrate UUID
 
-	# Record PID of script
+	local uuid
+    local uuid_type=$1
+    local log_file="uuid_log.txt"
+
+    local attempt=3
+    case $uuid_type in	# Generate UUID based on input type
+        1)
+            uuid=$(generate_uuid1)
+            ;;
+        2)
+            uuid=$(generate_uuid2)
+            ;;
+		4)
+			uuid=$(generate_uuid4)
+            ;;
+		3)
+			categorie_directory
+            ;;
+        *)
+            echo "Invalid UUID type"
+            exit 1
+            ;;
+    esac
+
+    while (( attempts > 0 )); do		# check if UUID exists in file and if collision occurred
+        if ! grep -q "^$uuid$" "$log_file"; then	# Check for collision
+            echo "$uuid $(date)">>"$log_file"		# Record UUID and timestamp in log
+            echo "$uuid"				# Output to terminal 
+            echo "$uuid">> uuid_output.txt
+            return 0
+        else
+            echo "Collision detected for UUID : $uuid"
+            (( max_attempts-- ))
+            uuid=$(generate_uuid $uuid_type) # Retry generating UUID
+        fi
+		
+    done
+
+    echo "Maximum attempts reached. Exiting..."
+    exit 1
+
+}
+
+
+# Function to categorize content in directory
+categorie_directory() {
+   
+    for dir in _Directory/*/; do   # Iterate through child directories
+        dir_name=$(basename "$dir")     # Get directory name
+       
+        # Count files of each type and calculate size
+        file_types=$(find "$dir" -type f | awk -F. '{print $NF}' | sort | uniq -c)
+        total_size=$(du -sh "$dir" | awk '{print $1}')
+        
+        # Find shortest and largest file names
+        shortest_file=$(find "$dir" -type f -printf "%f\n" | awk '{print length, $0}' | sort -n | head -n 1 | cut -d ' ' -f 2-)
+        longest_file=$(find "$dir" -type f -printf "%f\n" | awk '{print length, $0}' | sort -rn | head -n 1 | cut -d ' ' -f 2-)
+        
+        # Output results to terminal 
+        echo "Directory: $dir_name"     # output directory name to terminal
+        echo "File types and counts:"
+        echo "$file_types"
+        echo "Total size : $total_size"
+        # Output shortest and longest file names to terminal
+        echo "Shortest file name: $shortest_file"
+        echo "Longest file name: $longest_file"
+        
+        # Output results to file
+        echo "Directory: $dir_name" >> directory_output.txt
+        echo "File types and counts:" >> directory_output.txt
+        echo "$file_types" >> directory_output.txt
+        echo "Total size: $total_size" >> directory_output.txt
+        echo "Shortest file name: $shortest_file" >> directory_output.txt
+        echo "Longest file name: $longest_file" >> directory_output.txt
+        echo >> directory_output.txt
+
+    done
+}
+
+# Main function
+main() {
+    local attempts=3
+	#prompt user to enter a UUID type to type.
+    while [[ $attempts -gt 0 ]]; do
+        read -p "Enter 1 for UUID version 1, 2 for UUID version 2 , 4 for UUID version 4 & 3 for categorise : " uuid_type
+        case $uuid_type in   
+			1)
+                generate_uuid1
+				break
+                ;;
+            2)
+                generate_uuid2
+				break
+                ;;
+            4)
+                generate_uuid4
+				break
+                ;;
+            3)
+                categorise_directory
+                ;;
+            *)
+                echo "Invalid option. Usage: $0 {1 | 2 | 3 | 4}"
+                ((attempts--))
+                ;;
+        esac
+    done
+    echo "Maximum attempts reached. Exiting..."
+	
 	#echo "Script PID: $$" >> script_log.txt
-
+	# Record script comand
+	echo "$(date) -$@ Script PID: $$" >> script_log.txt		# Record PID of script
+    categorie_directory
+	exit 1
 	
-	#echo "$(date) -$@" >> script_log.txt # Record script comand
+}
 
-	# Perform action based on option
-	#case $1 in
-	#uuid)
-		#generate_uuid "$2"
-		#;;
+# Function to display the man page
+display_man_page() {
+    # Your code to display the man page here
+    echo "nothing"
+}
 
-	#categorize)
-		#categorize_directory
-		#;;
-	#*)
-		#echo "Invalid option : $1"
-		#exit 1
-		#;;
-	#esac
-
-	#}
-# Call main function with arguements
-#'main "$@"
-
-
+main "$@"       # Call main function
