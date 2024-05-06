@@ -121,25 +121,35 @@ categorie_directory() {
         
         # Output results to terminal 
         echo "Directory: $dir_name"     # output directory name to terminal
+        echo "Total size : $total_size" 
         echo "Permissions | Owner | Group | Size | Last Modified | Filename |"
         echo "$permissions"
-        echo "Total size : $total_size"
+        
         # Output shortest and longest file names to terminal
         echo "Shortest file name: $shortest_file"
         echo "Longest file name: $longest_file"
         echo " "         # Add a blank line for separation
-        
+
+        # Output results to file
+        echo " " >> directory_output.txt #Space before each directory
+        echo "$(date)" >> directory_output.txt
+        echo "Directory: $dir_name" >> directory_output.txt
+        echo "Permissions | Owner | Group | Size | Last Modified | Filename |" >> directory_output.txt
+        echo "$file_info" >> directory_output.txt
+        echo "Total size: $total_size" >> directory_output.txt
+        echo "Shortest file name: $shortest_file" >> directory_output.txt
+        echo "Longest file name: $longest_file" >> directory_output.txt
+        echo "" >> directory_output.txt
     done
 }
 # Function to record user login information and script commands
 record_logs() {
     # Get current date, time, history & Get user login information
     local script_commands=$(history | tail -n +2 | sed 's/^[[:space:]]*[0-9]*[[:space:]]*//' | sed '/^record_logs$/d')  # Get script commands from history
-    local log_entry="[$(date "+%Y-%m-%d %H:%M:%S") User login information: $(whoami) \n" # Create log entry
-    echo -e "$log_entry" >> script_log.txt      # Append log entry to log file
+    local log_entry="[$(date "+%Y-%m-%d %H:%M:%S")] User login information: $(whoami) -Script PID: $$ \n"  # Create log entry
+    
+    echo -e "$log_entry" >> script_log.txt      # Append log entry to log file 
     echo -e "Log entry recorded !\n$log_entry"   # Print log entry to terminal
-    # Append script commands to log file
-    history | tail -n +2 | sed 's/^[[:space:]]*[0-9]*[[:space:]]*//' >> script_log.txt
 }
   
 create_man_page() {
@@ -183,13 +193,13 @@ main() {
         esac
     done
     echo "Maximum attempts reached. Exiting..."
-	echo "$catagorise_directory " >> directory_output.txt
+	echo "$categorie_directory " >> directory_output.txt
+    categorie_directory
 	# Record script command
-    echo "$(date) | $(whoami) -Script PID: $$" >> script_log.txt  # Record PID of script with user
-    # Append script commands to log file
-    history | tail -n +2 | sed 's/^[[:space:]]*[0-9]*[[:space:]]*//' >> script_log.txt
-    echo "User login information: $(date) | $(whoami) " # Printing to the terminal
-    xit 1
+    echo "$record_logs"
+    
+   # history | tail -n +2 | sed 's/^[[:space:]]*[0-9]*[[:space:]]*//' >> script_log.txt     # This line of codes did not work 
+    exit 1
 }
 
 # Check if an argument is passed to the script
