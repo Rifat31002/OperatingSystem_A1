@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# utility_script.1 is the manual page / manpage for this script
 # Function to genrate UUID1
 generate_uuid1 () {
     # Generate UUID based on UUID version 1 specifications
@@ -26,7 +26,6 @@ generate_uuid2() {		# Distributed Computing Environment (DCE)
     local uuid=$(printf "%X-%X-%s-%s" $timestamp $lower_timestamp $mac_address $hostname)      # Combine timestamp, local identifier, MAC address, and hostname
     
     echo "UUID version 2: $uuid"        # Print UUID version 2 to the terminal
-
 }
 
 # Function to genrate UUID4
@@ -49,35 +48,24 @@ generate_uuid4() {          # Generate UUID based on UUID version 4 specificatio
 
     echo "UUID version 4: $uuid"    # Print UUID version 4 to the terminal
 }
-# Function to check if UUID exists in file and if collision occurred
-check_uuid_collision() {
-    local uuid=$1
-    local log_file=$2
-
-    if grep -q "^$uuid$" "$log_file"; then
-      return 1
-    else
-        return 0
-   fi
-}
 
 #Function to genrate UUID
 generate_uuid() {     
 
-	local uuid=$1
+	#ocal uuid=$1
     local uuid_type=$1
     local log_file="uuid_log.txt"
     local attempt=3
 
     case $uuid_type in	# Generate UUID based on input type
         1)
-            uuid=$(generate_uuid1)
+            local uuid=$(generate_uuid1)
             ;;
         2)
-            uuid=$(generate_uuid2)
+            local uuid=$(generate_uuid2)
             ;;
 		4)
-			uuid=$(generate_uuid4)
+			local uuid=$(generate_uuid4)
             ;;
         *)
             echo "Invalid UUID type"
@@ -86,21 +74,21 @@ generate_uuid() {
     esac
 
     while (( attempt > 0  )); do		# check if UUID exists in file and if collision occurred
-        if ! grep -q  "^$uuid" "$log_file"; then	# Check for collision
-            echo "$(date) $uuid$ ">>"$log_file"		# Record UUID and timestamp in log
-            echo "$uuid"				# Output to terminal 
+        if  grep -q  "^$uuid" "$log_file"; then	# Check for collision
+            echo "Collision detected for UUID: $uuid\n"
+            echo "$(date) Collision detected for UUID: $uuid$ ">>"$log_file"		# Record collision and timestamp in log
+            (( attempt--))
+          uuid=$(generate_uuid $uuid_type)     # Retry generating UUID
+        else
+            echo "$(date) $uuid" >> "$log_file" # Record UUID and timestamp in log
+            echo "$uuid"			        	# Output to terminal 
             echo "$uuid">> uuid_output.txt
             return 0
-        else
-            echo "Collision detected for UUID : $uuid"
-            (( attempt--))
-            uuid=$(generate_uuid $uuid_type) # Retry generating UUID
         fi
     done
 
     echo "Maximum attempts reached. Exiting..."
     exit 1
-
 }
 
 # Function to categorize content in directory
@@ -144,14 +132,17 @@ categorie_directory() {
 }
 # Function to record user login information and script commands
 record_logs() {
-    # Get current date, time, history & Get user login information
+    local current_datetime=$(date "+%Y-%m-%d %H:%M:%S")   # Get current date and time
+    local user_login_info=$(whoami)                        # Get user login information
     local script_commands=$(history | tail -n +2 | sed 's/^[[:space:]]*[0-9]*[[:space:]]*//' | sed '/^record_logs$/d')  # Get script commands from history
-    local log_entry="[$(date "+%Y-%m-%d %H:%M:%S")] User login information: $(whoami) -Script PID: $$ \n"  # Create log entry
+
+    # Create log entry
+    #local script_commands=$(history | tail -n +2 | sed 's/^[[:space:]]*[0-9]*[[:space:]]*//' | sed '/^record_logs$/d')  # Get script commands from history
+    local log_entry="[$current_datetime] User login information: $user_login_info\nScript commands:\n$script_commands\n"
+    #local log_entry="[$(date "+%Y-%m-%d %H:%M:%S")] User login information: $(whoami) -Script PID: $$ \n"  # Create PID log entry
+    echo -e "Log entry recorded !\n$log_entry"   # Print log entry to terminal thid id working on uuid_log.txt after calling from main
     
-    echo -e "$log_entry" >> script_log.txt      # Append log entry to log file 
-    echo -e "Log entry recorded !\n$log_entry"   # Print log entry to terminal
 }
-  
 create_man_page() {
     # Create man page content
     local man_page_content="
@@ -164,7 +155,7 @@ create_man_page() {
     This script is a Bash utility that can generate UUIDs, categorize content in directories, and record user login information and script commands.
     .SH OPTIONS
     .B record-logs
-    Record user login information and script commands.
+    Records user login information and script commands.
     .B create-man-page
     Create a man page for the utility script.
     .SH AUTHOR
@@ -193,11 +184,11 @@ main() {
         esac
     done
     echo "Maximum attempts reached. Exiting..."
-	echo "$categorie_directory " >> directory_output.txt
-    categorie_directory
+	echo "$categorie_directory " >> directory_output.txt # Not working
+    echo "$categorie_directory"
 	# Record script command
-    echo "$record_logs"
-    
+    echo "$record_logs"     # Working log in uuid_log.txt
+    echo "$record_logs" >> script_log.txt      # Append log entry to log file 
    # history | tail -n +2 | sed 's/^[[:space:]]*[0-9]*[[:space:]]*//' >> script_log.txt     # This line of codes did not work 
     exit 1
 }
@@ -206,6 +197,7 @@ main() {
 if [[ $# -eq 1 ]]; then
     case $1 in
         record-logs)
+            #echo "$record_logs"    # no output on the terminal
             record_logs
             ;;
         man-page)
