@@ -1,5 +1,7 @@
 #!/bin/bash
 # utility_script.1 is the manual page / manpage for this script
+# man ./utility_script.sh to run the man page
+# ./utility_script.sh _Directory to View Directory
 # Function to genrate UUID1
 generate_uuid1 () {
     # Generate UUID based on UUID version 1 specifications
@@ -76,13 +78,13 @@ generate_uuid() {
     while (( attempt > 0  )); do		# check if UUID exists in file and if collision occurred
         if  grep -q  "^$uuid" "$log_file"; then	# Check for collision
             echo "Collision detected for UUID: $uuid\n"
-            echo "$(date) Collision detected for UUID: $uuid$ ">>"$log_file"		# Record collision and timestamp in log
+            echo "$(date) Collision detected for UUID: $uuid$ ">>"$log_file"	# This Log is recording the collision detected.	# Record collision and timestamp in log
             (( attempt--))
-          uuid=$(generate_uuid $uuid_type)     # Retry generating UUID
+            uuid=$(generate_uuid $uuid_type)     # Retry generating UUID
         else
-            echo "$(date) $uuid" >> "$log_file" # Record UUID and timestamp in log
+            echo "$(date) $uuid" >> "$log_file" # Records newly generated UUID with timestamp in uuid_log.txt file log
             echo "$uuid"			        	# Output to terminal 
-            echo "$uuid">> uuid_output.txt
+            echo "$uuid">> $uuid_output.txt
             return 0
         fi
     done
@@ -162,7 +164,7 @@ create_man_page() {
     Your Name
     "
     echo "$man_page_content" > utility_script.1     # Create man page file
-    gzip utility_script.1       # Compress man page file
+    #gzip utility_script.1       # Compress man page file
 }
 
 # Main function
@@ -188,7 +190,7 @@ main() {
     echo "$categorie_directory"
 	# Record script command
     echo "$record_logs"     # Working log in uuid_log.txt
-    echo "$record_logs" >> script_log.txt      # Append log entry to log file 
+    echo "$record_logs" >> $script_log.txt      # Append log entry to log file 
    # history | tail -n +2 | sed 's/^[[:space:]]*[0-9]*[[:space:]]*//' >> script_log.txt     # This line of codes did not work 
     exit 1
 }
@@ -196,15 +198,15 @@ main() {
 # Check if an argument is passed to the script
 if [[ $# -eq 1 ]]; then
     case $1 in
-        record-logs)
+        _Directory)
             #echo "$record_logs"    # no output on the terminal
-            record_logs
+            categorie_directory
             ;;
-        man-page)
+        man)
             create_man_page
             ;;
         *)
-            echo "Invalid argument. Usage: $0 {record-logs | man-page}"
+            echo "Invalid argument. Usage: $0 {_Directory | man}"
             ;;
     esac
 else
