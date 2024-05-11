@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # utility_script.1 is the manual page / manpage for this script
 # man ./utility_script.sh to run the man page
 # ./utility_script.sh _Directory to View Directory
@@ -138,6 +139,7 @@ categorie_directory() {
     done
 }
    
+: <<'COMMENT'
 create_man_page() {
     # Create man page content
     local man_page_content="
@@ -151,14 +153,16 @@ create_man_page() {
     .SH OPTIONS
     .B record-logs
     Records user login information and script commands.
+    
     .B create-man-page
     Create a man page for the utility script.
     .SH AUTHOR
-    Your Name
+    Unknown Name
     "
     echo "$man_page_content" > utility_script.1     # Create man page file
     #zip utility_script.1       # Compress man page file
 }
+COMMENT
 
 # Main function
 main() {
