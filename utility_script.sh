@@ -8,12 +8,12 @@ generate_uuid1 () {
     local timestamp=$(date +%s)             # Get current timestamp in seconds since Unix epoch
     local nanoseconds=$(date +%N)           # Get nanoseconds portion of current time
     
-    # Get the MAC address of the host machine
-    local mac_address=$(ip link show | grep -oE 'ether [[:alnum:]:]+' | awk '{print $2}')
-    local uuid="${timestamp}-${nanoseconds}-${mac_address}" # Format UUID1 according to specifications  # Format UUID1 according to the specifications
     
-    echo  "UUID version 1: $uuid"            # Print UUID version 1 to the terminal
-    #echo "$uuid" >> uuid_output.txt      # Save UUID version 1 to a file
+    local mac_address=$(ip link show | grep -oE 'ether [[:alnum:]:]+' | awk '{print $2}')                # Get the MAC address of the host machine
+    local uuid="${timestamp}-${nanoseconds}-${mac_address}" # Format UUID1 according to specifications 
+    
+    echo "UUID version 1: $uuid"            # Print UUID version 1 to the terminal
+    echo "UUID version 1: $uuid" >> uuid_output.txt      # Save UUID version 1 to a file
     # Debugging: Print out the values of variables
             #echo "Timestamp: $timestamp"
             #echo "Nanoseconds: $nanoseconds"
@@ -28,8 +28,8 @@ generate_uuid2() {		# Distributed Computing Environment (DCE)
     local uuid=$(printf "%X-%X-%s-%s" $timestamp $lower_timestamp $mac_address $hostname)      # Combine timestamp, local identifier, MAC address, and hostname
     
     echo "UUID version 2: $uuid"        # Print UUID version 2 to the terminal
+    echo "UUID version 2: $uuid" >> uuid_output.txt      # Save UUID version 2 to a file
 }
-
 # Function to genrate UUID4
 generate_uuid4() {          # Generate UUID based on UUID version 4 specifications
     local random_hex=$(dd if=/dev/random count=16 bs=1 2>/dev/null | xxd -ps)       # Generate 128 random bits
@@ -49,6 +49,7 @@ generate_uuid4() {          # Generate UUID based on UUID version 4 specificatio
     local uuid=$(echo "${uuid_hex^^}" | sed 's/-$//')       # Convert to uppercase and remove trailing hyphen
 
     echo "UUID version 4: $uuid"    # Print UUID version 4 to the terminal
+    echo "UUID version 4: $uuid" >> uuid_output.txt      # Save UUID version 4 to a file
 }
 
 #Function to genrate UUID
@@ -57,6 +58,7 @@ generate_uuid() {
 	#ocal uuid=$1
     local uuid_type=$1
     local log_file="uuid_log.txt"
+    local output="uuid_output.txt"
     local attempt=3
 
     case $uuid_type in	# Generate UUID based on input type
@@ -82,9 +84,9 @@ generate_uuid() {
             (( attempt--))
             uuid=$(generate_uuid $uuid_type)     # Retry generating UUID
         else
-            echo "$(date) $uuid" >> "$log_file" # Records newly generated UUID with timestamp in uuid_log.txt file log
+            echo "$(date) | $(whoami) | $uuid" >> "$log_file" # Records newly generated UUID with timestamp in uuid_log.txt file log
             echo "$uuid"			        	# Output to terminal 
-            echo "$uuid">> $uuid_output.txt
+            echo "$uuid">> "$output"
             return 0
         fi
     done
@@ -100,51 +102,42 @@ categorie_directory() {
         dir_name=$(basename "$dir")     # Get directory name
        
         # Count files of each type and calculate size
-        file_types=$(find "$dir" -type f | awk -F. '{print $NF}' | sort | uniq -c)
-        total_size=$(du -sh "$dir" | awk '{print $1}') # Human readable formate
-        permissions=$(ls -l "$dir")
-        file_info=$(ls -l "$dir" | awk '{print $1,$3,$4,$5,$6,$7,$8,$9}')
+        file_types=$(find "$dir" -type f | awk -F. '{print $NF}' | sort | uniq -c)  
+        total_size=$(du -sh "$dir" | awk '{print $1}')      # Human readable formate
+       # permissions=$(ls -l "$dir")
+        #file_info=$(ls -l "$dir" | awk '{print $1,$3,$4,$5,$6,$7,$8,$9}')
         
         # Find shortest and largest file names
         shortest_file=$(find "$dir" -type f -printf "%f\n" | awk '{print length, $0}' | sort -n | head -n 1 | cut -d ' ' -f 2-)
         longest_file=$(find "$dir" -type f -printf "%f\n" | awk '{print length, $0}' | sort -rn | head -n 1 | cut -d ' ' -f 2-)
         
         # Output results to terminal 
+        echo "$(date)" 
         echo "Directory: $dir_name"     # output directory name to terminal
-        echo "Total size : $total_size" 
-        echo "Permissions | Owner | Group | Size | Last Modified | Filename |"
-        echo "$permissions"
-        
-        # Output shortest and longest file names to terminal
-        echo "Shortest file name: $shortest_file"
+        echo "File counts and types: "
+        echo "$file_types"
+        echo "Total size used: $total_size" 
+       # echo "Permissions | Owner | Group | Size | Last Modified | Filename.Filetype |"
+       # echo "$permissions"
+        echo "Shortest file name: $shortest_file"       # Output shortest and longest file names to terminal
         echo "Longest file name: $longest_file"
-        echo " "         # Add a blank line for separation
+        echo " "         # Add a blank line for separation 
 
         # Output results to file
         echo " " >> directory_output.txt #Space before each directory
         echo "$(date)" >> directory_output.txt
         echo "Directory: $dir_name" >> directory_output.txt
-        echo "Permissions | Owner | Group | Size | Last Modified | Filename |" >> directory_output.txt
-        echo "$file_info" >> directory_output.txt
-        echo "Total size: $total_size" >> directory_output.txt
+        echo "File counts and types: " >> directory_output.txt
+        echo "$file_types" >> directory_output.txt
+        #echo "Permissions | Owner-Group | Size | Last Modified | Filename |" >> directory_output.txt
+        #echo "$file_info" >> directory_output.txt
+        echo "Total size used: $total_size" >> directory_output.txt
         echo "Shortest file name: $shortest_file" >> directory_output.txt
-        echo "Longest file name: $longest_file" >> directory_output.txt
+        echo "Longest file name: $longest_file " >> directory_output.txt
         echo "" >> directory_output.txt
     done
 }
-# Function to record user login information and script commands
-record_logs() {
-    local current_datetime=$(date "+%Y-%m-%d %H:%M:%S")   # Get current date and time
-    local user_login_info=$(whoami)                        # Get user login information
-    local script_commands=$(history | tail -n +2 | sed 's/^[[:space:]]*[0-9]*[[:space:]]*//' | sed '/^record_logs$/d')  # Get script commands from history
-
-    # Create log entry
-    #local script_commands=$(history | tail -n +2 | sed 's/^[[:space:]]*[0-9]*[[:space:]]*//' | sed '/^record_logs$/d')  # Get script commands from history
-    local log_entry="[$current_datetime] User login information: $user_login_info\nScript commands:\n$script_commands\n"
-    #local log_entry="[$(date "+%Y-%m-%d %H:%M:%S")] User login information: $(whoami) -Script PID: $$ \n"  # Create PID log entry
-    echo -e "Log entry recorded !\n$log_entry"   # Print log entry to terminal thid id working on uuid_log.txt after calling from main
-    
-}
+   
 create_man_page() {
     # Create man page content
     local man_page_content="
@@ -164,7 +157,7 @@ create_man_page() {
     Your Name
     "
     echo "$man_page_content" > utility_script.1     # Create man page file
-    #gzip utility_script.1       # Compress man page file
+    #zip utility_script.1       # Compress man page file
 }
 
 # Main function
@@ -185,13 +178,12 @@ main() {
                 ;;
         esac
     done
+    
+    # Record script command
+    echo "$(date) | $(whoami) | -$@ Script PID: $$" >> script_log.txt     # Record PID of script
+    # history | tail -n +2 | sed 's/^[[:space:]]*[0-9]*[[:space:]]*//' >> script_log.txt     # This line of codes did not work 
+    echo -e "Log entry recorded !\n"   # Print log entry to terminal thid id working on uuid_log.txt after calling from main
     echo "Maximum attempts reached. Exiting..."
-	echo "$categorie_directory " >> directory_output.txt # Not working
-    echo "$categorie_directory"
-	# Record script command
-    echo "$record_logs"     # Working log in uuid_log.txt
-    echo "$record_logs" >> $script_log.txt      # Append log entry to log file 
-   # history | tail -n +2 | sed 's/^[[:space:]]*[0-9]*[[:space:]]*//' >> script_log.txt     # This line of codes did not work 
     exit 1
 }
 
@@ -201,12 +193,14 @@ if [[ $# -eq 1 ]]; then
         _Directory)
             #echo "$record_logs"    # no output on the terminal
             categorie_directory
+            echo "$catagorise_directory " >> "$directory_output.txt"
             ;;
-        man)
+        _Man)
             create_man_page
+            echo "$ccreate_man_page " >> "$utility_script.1"
             ;;
         *)
-            echo "Invalid argument. Usage: $0 {_Directory | man}"
+            echo "Invalid argument. Usage: $0 {_Directory | _Man}"
             ;;
     esac
 else
