@@ -3,6 +3,7 @@
 # utility_script.1 is the manual page / manpage for this script
 # man ./utility_script.sh to run the man page
 # ./utility_script.sh _Directory to View Directory
+
 # Function to genrate UUID1
 generate_uuid1 () {
     # Generate UUID based on UUID version 1 specifications
@@ -13,13 +14,18 @@ generate_uuid1 () {
     local mac_address=$(ip link show | grep -oE 'ether [[:alnum:]:]+' | awk '{print $2}')                # Get the MAC address of the host machine
     local uuid="${timestamp}-${nanoseconds}-${mac_address}" # Format UUID1 according to specifications 
     
+    check_collision "$uuid"         # Check for collision
+
+    # Record generated UUID in log file
     echo "UUID version 1: $uuid"            # Print UUID version 1 to the terminal
     echo "UUID version 1: $uuid" >> uuid_output.txt      # Save UUID version 1 to a file
+    echo " $(date) | $(whoami) | UUID version 1: $uuid" >> uuid_log.txt  # saving user info to log
     # Debugging: Print out the values of variables
             #echo "Timestamp: $timestamp"
             #echo "Nanoseconds: $nanoseconds"
             #echo "Random Hex: $random_hex"
 }
+
 # Function to generate UUID2
 generate_uuid2() {		# Distributed Computing Environment (DCE)
     local timestamp=$(date +%s)         # Get current timestamp in seconds simce Unix epoch
@@ -28,9 +34,14 @@ generate_uuid2() {		# Distributed Computing Environment (DCE)
     local hostname=$(hostname)           # Get the domain name or hostname
     local uuid=$(printf "%X-%X-%s-%s" $timestamp $lower_timestamp $mac_address $hostname)      # Combine timestamp, local identifier, MAC address, and hostname
     
+    check_collision "$uuid"         # Check for collision
+    
+     # Record generated UUID in log file
     echo "UUID version 2: $uuid"        # Print UUID version 2 to the terminal
     echo "UUID version 2: $uuid" >> uuid_output.txt      # Save UUID version 2 to a file
+    echo " $(date) | $(whoami) | UUID version 2: $uuid" >> uuid_log.txt     # saving user info to log
 }
+
 # Function to genrate UUID4
 generate_uuid4() {          # Generate UUID based on UUID version 4 specifications
     local random_hex=$(dd if=/dev/random count=16 bs=1 2>/dev/null | xxd -ps)       # Generate 128 random bits
@@ -48,46 +59,28 @@ generate_uuid4() {          # Generate UUID based on UUID version 4 specificatio
     local modified_hex="${random_hex:0:24}$(printf "%02X" $byte7)${random_hex:14:8}$(printf "%02X" $byte9)${random_hex:26}"
     local uuid_hex=$(echo "$modified_hex" | sed 's/\(..\)/\1-/g')   # Convert to hexadecimal representation
     local uuid=$(echo "${uuid_hex^^}" | sed 's/-$//')       # Convert to uppercase and remove trailing hyphen
+    
+    check_collision "$uuid"         # Check for collision
 
+    # Record generated UUID in log file
     echo "UUID version 4: $uuid"    # Print UUID version 4 to the terminal
     echo "UUID version 4: $uuid" >> uuid_output.txt      # Save UUID version 4 to a file
+    echo " $(date) | $(whoami) | UUID version 4: $uuid" >> uuid_log.txt # saving user info to log
 }
 
-#Function to genrate UUID
-generate_uuid() {     
-
-	#ocal uuid=$1
-    local uuid_type=$1
+# Function to check if UUID exists in file and if collision occurred
+# Function to check for collision
+check_collision() {
+    local uuid=$1
     local log_file="uuid_log.txt"
-    local output="uuid_output.txt"
-    local attempt=3
+    local attempts=3
 
-    case $uuid_type in	# Generate UUID based on input type
-        1)
-            local uuid=$(generate_uuid1)
-            ;;
-        2)
-            local uuid=$(generate_uuid2)
-            ;;
-		4)
-			local uuid=$(generate_uuid4)
-            ;;
-        *)
-            echo "Invalid UUID type"
-            exit 1
-            ;;
-    esac
-
-    while (( attempt > 0  )); do		# check if UUID exists in file and if collision occurred
-        if  grep -q  "^$uuid" "$log_file"; then	# Check for collision
-            echo "Collision detected for UUID: $uuid\n"
-            echo "$(date) Collision detected for UUID: $uuid$ ">>"$log_file"	# This Log is recording the collision detected.	# Record collision and timestamp in log
-            (( attempt--))
-            uuid=$(generate_uuid $uuid_type)     # Retry generating UUID
+    while (( attempts > 0 )); do       # check if UUID exists in file and if collision occurred
+        if grep -q "^$uuid" "$log_file"; then       #
+            echo "Collision detected for UUID: $uuid"
+            (( attempts-- ))
+            uuid=$(generate_uuid "$uuid_type")      # Retry generating UUID
         else
-            echo "$(date) | $(whoami) | $uuid" >> "$log_file" # Records newly generated UUID with timestamp in uuid_log.txt file log
-            echo "$uuid"			        	# Output to terminal 
-            echo "$uuid">> "$output"
             return 0
         fi
     done
@@ -166,47 +159,68 @@ COMMENT
 
 # Main function
 main() {
+    local choice
     local attempts=3
-	
-    #prompt user to enter a UUID type to type.
+    
     while [[ $attempts -gt 0 ]]; do
-        read -p "Enter 1 for UUID version 1, 2 for UUID version 2 & 4 for UUID version 4 : " uuid_type
-        case $uuid_type in   
-			1|2|4)
-                generate_uuid $uuid_type
-				break
+        while true; do
+            echo "Choose an option:"
+            echo "1. Generate UUID version 1"
+            echo "2. Generate UUID version 2"
+            echo "3. Generate UUID version 4"
+            echo "4. Categorize content in directory"
+            echo "5. Display man page"
+            echo "6. Exit"
+            read -p "Enter your choice: " choice
+
+            case $choice in     # Generate UUID based on input type
+    case $1 in
+
+                1)
+                    generate_uuid1  # Generate UUID1
+                    ;;
+                2)
+                    generate_uuid2  # Generate UUID2
+                    ;;
+                3)
+                    generate_uuid4  # Generate UUID4
+                    ;;
+                4)
+                    categorie_directory
+                    echo "$catagorise_directory " >> "$directory_output.txt"
+                    ;;
+                5)
+                    # Display man page
+                    #man ./utility_script.sh    # Does not work
+                    man utility_script          # Does work
+                    ;;
+                6)
+                    echo "Exiting..."
+                    exit 0
                 ;;
             *)
-                echo "Invalid option. Usage: $0 {1 | 2 | 4}"
-                ((attempts--))
+                echo "Invalid choice. Please enter a number between 1 and 6."
                 ;;
         esac
+
+        read -p "Do you want to continue (y/n)? " continue_choice
+        if [[ $continue_choice != "y" ]]; then
+            break 2
+        fi
     done
-    
+        
+    ((attempts--))
+        if [[ $attempts -gt 0 ]]; then
+            echo "You have $attempts attempts left."
+        fi
+    done
+
     # Record script command
-    echo "$(date) | $(whoami) | -$@ Script PID: $$" >> script_log.txt     # Record PID of script
-    # history | tail -n +2 | sed 's/^[[:space:]]*[0-9]*[[:space:]]*//' >> script_log.txt     # This line of codes did not work 
-    echo -e "Log entry recorded !\n"   # Print log entry to terminal thid id working on uuid_log.txt after calling from main
+    echo "$(date) | $(whoami) | -$@ Script PID: $$" >> script_log.txt  # Logging the PID
+    echo -e "Log entry recorded!\n"
     echo "Maximum attempts reached. Exiting..."
     exit 1
 }
 
-# Check if an argument is passed to the script
-if [[ $# -eq 1 ]]; then
-    case $1 in
-        _Directory)
-            #echo "$record_logs"    # no output on the terminal
-            categorie_directory
-            echo "$catagorise_directory " >> "$directory_output.txt"
-            ;;
-        _Man)
-            create_man_page
-            echo "$ccreate_man_page " >> "$utility_script.1"
-            ;;
-        *)
-            echo "Invalid argument. Usage: $0 {_Directory | _Man}"
-            ;;
-    esac
-else
-    main "$@"
-fi
+# Call the main function
+main
