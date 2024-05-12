@@ -204,12 +204,12 @@ main() {
         esac
 
         read -p "Do you want to continue (y/n)? " continue_choice        # Option to return to terminal
-        if [[ $continue_choice != "y" ]]; then
+        if [[ $continue_choice != "y" ]]; then                          # If user selects y then exit from the loop
             break 2
         fi
     done
         
-    ((attempts--))
+    ((attempts--))              # Counting the attemps down
         if [[ $attempts -gt 0 ]]; then
             echo "You have $attempts attempts left."
         fi
