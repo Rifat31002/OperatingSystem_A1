@@ -69,15 +69,15 @@ generate_uuid4() {          # Generate UUID based on UUID version 4 specificatio
 }
 
 # Function to check if UUID exists in file and if collision occurred
-# Function to check for collision
 check_collision() {
     local uuid=$1
     local log_file="uuid_log.txt"
-    local attempts=3
+    local attempts=3    # Setting a maximum attempt number
 
     while (( attempts > 0 )); do       # check if UUID exists in file and if collision occurred
-        if grep -q "^$uuid" "$log_file"; then       #
-            echo "Collision detected for UUID: $uuid"
+        if grep -q "^$uuid" "$log_file"; then       # Check for collision
+            echo "Collision detected for UUID: $uuid"   # If there is any match then collision detected and print it in the terminal
+            echo "$uuid$ $(date)">>"$log_file"      # Record UUID and 
             (( attempts-- ))
             uuid=$(generate_uuid "$uuid_type")      # Retry generating UUID
         else
@@ -160,11 +160,10 @@ COMMENT
 # Main function
 main() {
     local choice
-    local attempts=3
+    local attempts=3    # Setting a maximum attempt number
     
     while [[ $attempts -gt 0 ]]; do
-        while true; do
-            echo "Choose an option:"
+        while true; do      # Prompt user to enter an option from the index
             echo "1. Generate UUID version 1"
             echo "2. Generate UUID version 2"
             echo "3. Generate UUID version 4"
@@ -174,16 +173,15 @@ main() {
             read -p "Enter your choice: " choice
 
             case $choice in     # Generate UUID based on input type
-    case $1 in
 
                 1)
-                    generate_uuid1  # Generate UUID1
+                    generate_uuid1  # Assigning uuid value by calling UUID1 function
                     ;;
                 2)
-                    generate_uuid2  # Generate UUID2
+                    generate_uuid2  # Assigning uuid value by calling UUID2 function
                     ;;
                 3)
-                    generate_uuid4  # Generate UUID4
+                    generate_uuid4  # Assigning uuid value by calling UUID4 function
                     ;;
                 4)
                     categorie_directory
@@ -199,11 +197,13 @@ main() {
                     exit 0
                 ;;
             *)
-                echo "Invalid choice. Please enter a number between 1 and 6."
+                echo "Invalid choice. Please enter a number between 1 and 6."   # Error handling with unknown inputs
+            exit 1
+
                 ;;
         esac
 
-        read -p "Do you want to continue (y/n)? " continue_choice
+        read -p "Do you want to continue (y/n)? " continue_choice        # Option to return to terminal
         if [[ $continue_choice != "y" ]]; then
             break 2
         fi

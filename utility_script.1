@@ -1,16 +1,47 @@
 
-    .TH UTILITY_SCRIPT 1 "" "Utility Script Manual"
+    .TH UTILITY_SCRIPT 1 " May 2020" "Utility Script Manual"
     .SH NAME
     utility_script \- Bash utility script
+
     .SH SYNOPSIS
-    utility_script [OPTIONS]
+    .B utility_script [OPTIONS]
+
     .SH DESCRIPTION
-    This script is a Bash utility that can generate UUIDs, categorize content in directories, and record user login information and script commands.
+    This script is a Bash utility allows users to generate UUIDs of different versions (1, 2, or 4), categorize directory contents, or access a manual page and record user login information and script commands from the command line..
+    user simply run the script and follow the prompts to choose your desired action.
+    ____________________________________________________________
+    |User Types | 1 To Generate UUID version 1                 |
+    |           | 2 To Generate UUID version 2                 |
+    |           | 3 To Generate UUID version 4                 |
+    |           | 4 To Categorize content in directory         |
+    |           | 5 To Display man page                        |
+    |           | 6 To Exit                                    |
+    |___________|______________________________________________|
     .SH OPTIONS
-    .B record-logs
-    Records user login information and script commands.
-    .B create-man-page
-    Create a man page for the utility script.
+    .TP
+    .BR UUID Versions
+    .TP
+    .BR Recording log
+    Various files Records user login information and script commands. details below:
+    _____________________________________________________________
+    |      File Name          |         Description             | 
+    |_________________________|_________________________________|                                                                     
+    | 1. uuid_output.txt      | This file stores generated UUIDs|
+    | 2. uuid_log.txt         | This file stores history of     |
+    |                         | UUIDs, date & time of generating|
+    |                         | user, version number and        |
+    |                         | generated UUIDs.                |
+    | 3. directory_output.txt | Stores catagorised file informa-|
+    | 4. script_log.txt       | -tion.                          |
+    |                         | Stores the date, user, & script |
+    |                         | PID.                            |
+    | 5. utility_script.1     | This is manual page with user.  |
+    |_________________________|_________________________________|
+    To view man page type : man ./utility_script.1 . To View files from the terminal use cat commans and filename. Example : $ cat utility_script.1 
+    .TP
+    .BR catagorise_directory
+    This function categorizes the content in each directory within the _Directory directory. It counts the files of each type, calculates the total size used by the files, finds the shortest and longest file names, and outputs these details to both the terminal and a file.
+    
     .SH AUTHOR
-    Your Name
+    Unknown Name
     
